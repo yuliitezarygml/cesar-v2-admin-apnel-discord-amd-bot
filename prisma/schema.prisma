@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Discord сервера
+model Guild {
+  id              String          @id // Discord Guild ID
+  name            String
+  iconUrl         String?
+  ownerId         String
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  moderationLogs  ModerationLog[]
+  admins          Admin[]
+}
+
+// Пользователи Discord
+model User {
+  id                    String          @id // Discord User ID
+  username              String
+  discriminator         String          @default("0")
+  avatarUrl             String?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  
+  // Логи где пользователь является целью
+  targetLogs            ModerationLog[] @relation("TargetUser")
+  // Логи где пользователь является модератором
+  moderatorLogs         ModerationLog[] @relation("ModeratorUser")
+  
+  // Админ запись если есть
+  admin                 Admin?
+}
+
+// Администраторы бота
+model Admin {
+  id          Int       @id @default(autoincrement())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id])
+  guildId     String
+  guild       Guild     @relation(fields: [guildId], references: [id])
+  role        AdminRole @default(MODERATOR)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, guildId])
+}
+
+// Роли администраторов
+enum AdminRole {
+  OWNER
+  ADMIN
+  MODERATOR
+}
+
+// Типы модераторских действий
+enum ActionType {
+  BAN
+  UNBAN
+  KICK
+  MUTE
+  UNMUTE
+  WARN
+  UNWARN
+  TIMEOUT
+  REMOVE_TIMEOUT
+  NOTE
+  SLOWMODE
+  LOCK
+  UNLOCK
+  CLEAR
+  ROLE_ADD
+  ROLE_REMOVE
+}
+
+// Логи модерации
+model ModerationLog {
+  id            Int         @id @default(autoincrement())
+  
+  // Сервер
+  guildId       String
+  guild         Guild       @relation(fields: [guildId], references: [id])
+  
+  // Пользователь который был модерирован
+  targetId      String
+  target        User        @relation("TargetUser", fields: [targetId], references: [id])
+  
+  // Модератор который выполнил действие
+  moderatorId   String
+  moderator     User        @relation("ModeratorUser", fields: [moderatorId], references: [id])
+  
+  // Тип действия
+  action        ActionType
+  
+  // Причина
+  reason        String?
+  
+  // Длительность (для мутов/таймаутов) в секундах
+  duration      Int?
+  
+  // Дополнительные данные в JSON
+  metadata      Json?
+  
+  // Время создания
+  createdAt     DateTime    @default(now())
+
+  @@index([guildId])
+  @@index([targetId])
+  @@index([moderatorId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// Настройки сервера
+model GuildSettings {
+  id                  Int       @id @default(autoincrement())
+  guildId             String    @unique
+  
+  // ID канала для логов модерации
+  modLogChannelId     String?
+  
+  // ID роли для мута
+  muteRoleId          String?
+  
+  // Prefix для команд
+  prefix              String    @default("!")
+  
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+// Удалённые сообщения
+model DeletedMessage {
+  id            Int       @id @default(autoincrement())
+  guildId       String
+  channelId     String
+  channelName   String
+  authorId      String
+  authorName    String
+  content       String
+  deletedById   String
+  deletedByName String
+  createdAt     DateTime  @default(now())
+
+  @@index([guildId])
+  @@index([channelId])
+  @@index([authorId])
+  @@index([deletedById])
+}

@@ -1,0 +1,26 @@
+{
+    "name": "discord-moderation-bot",
+    "version": "1.0.0",
+    "description": "Discord moderation bot with admin panel",
+    "scripts": {
+        "dev": "concurrently -n BOT,API,WEB -c blue,green,magenta \"npm run bot:dev\" \"npm run api:dev\" \"npm run web:dev\"",
+        "start": "npm run dev",
+        "bot:dev": "cd bot && npm run dev",
+        "api:dev": "cd api && npm run dev",
+        "web:dev": "cd web && npm run dev",
+        "db:generate": "prisma generate",
+        "db:push": "prisma db push",
+        "db:migrate": "prisma migrate dev",
+        "db:seed": "node prisma/seed.js",
+        "db:setup": "npm run db:push && npm run db:seed",
+        "install:all": "npm install && cd bot && npm install && cd ../api && npm install && cd ../web && npm install"
+    },
+    "dependencies": {
+        "@prisma/client": "^5.7.0",
+        "dotenv": "^16.3.1"
+    },
+    "devDependencies": {
+        "concurrently": "^8.2.2",
+        "prisma": "^5.7.0"
+    }
+}

@@ -1,0 +1,17 @@
+{
+    "name": "discord-bot-api",
+    "version": "1.0.0",
+    "description": "API server for Discord moderation bot admin panel",
+    "main": "src/index.js",
+    "scripts": {
+        "start": "node src/index.js",
+        "dev": "node --watch src/index.js"
+    },
+    "dependencies": {
+        "@prisma/client": "^7.1.0",
+        "cors": "^2.8.5",
+        "dotenv": "^16.3.1",
+        "express": "^4.18.2",
+        "jsonwebtoken": "^9.0.2"
+    }
+}
