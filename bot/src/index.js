@@ -15,6 +15,7 @@ const client = new Client({
         GatewayIntentBits.GuildModeration,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildPresences, // Добавляем для отслеживания статусов
     ],
     partials: [Partials.GuildMember, Partials.User],
 });

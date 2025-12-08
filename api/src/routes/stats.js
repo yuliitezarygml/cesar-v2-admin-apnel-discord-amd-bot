@@ -139,4 +139,121 @@ router.get('/moderator/:moderatorId', async (req, res) => {
     }
 });
 
+// Получить статистику онлайн/офлайн пользователей
+router.get('/guild-online', async (req, res) => {
+    try {
+        const { guildId, period = '24h' } = req.query;
+
+        if (!guildId) {
+            return res.status(400).json({ error: 'guildId is required' });
+        }
+
+        const periodMap = {
+            '1h': 1 * 60 * 60 * 1000,
+            '6h': 6 * 60 * 60 * 1000,
+            '24h': 24 * 60 * 60 * 1000,
+            '7d': 7 * 24 * 60 * 60 * 1000,
+            '30d': 30 * 24 * 60 * 60 * 1000,
+        };
+
+        const startDate = new Date(Date.now() - (periodMap[period] || periodMap['24h']));
+
+        // Получаем последнюю статистику
+        const latestStats = await req.prisma.guildStats.findFirst({
+            where: { guildId },
+            orderBy: { timestamp: 'desc' },
+        });
+
+        // Получаем историю за период
+        const historicalStats = await req.prisma.guildStats.findMany({
+            where: {
+                guildId,
+                timestamp: { gte: startDate },
+            },
+            orderBy: { timestamp: 'desc' },
+        });
+
+        // Получаем среднюю статистику за период
+        const avgStats = await req.prisma.guildStats.aggregate({
+            where: {
+                guildId,
+                timestamp: { gte: startDate },
+            },
+            _avg: {
+                onlineMembers: true,
+                offlineMembers: true,
+                idleMembers: true,
+                dndMembers: true,
+                totalMembers: true,
+            },
+        });
+
+        res.json({
+            guildId,
+            period,
+            current: latestStats || {
+                totalMembers: 0,
+                onlineMembers: 0,
+                offlineMembers: 0,
+                idleMembers: 0,
+                dndMembers: 0,
+            },
+            average: {
+                totalMembers: Math.round(avgStats._avg.totalMembers || 0),
+                onlineMembers: Math.round(avgStats._avg.onlineMembers || 0),
+                offlineMembers: Math.round(avgStats._avg.offlineMembers || 0),
+                idleMembers: Math.round(avgStats._avg.idleMembers || 0),
+                dndMembers: Math.round(avgStats._avg.dndMembers || 0),
+            },
+            history: historicalStats.map(stat => ({
+                timestamp: stat.timestamp,
+                totalMembers: stat.totalMembers,
+                onlineMembers: stat.onlineMembers,
+                offlineMembers: stat.offlineMembers,
+                idleMembers: stat.idleMembers,
+                dndMembers: stat.dndMembers,
+            })),
+        });
+    } catch (error) {
+        console.error('Error fetching guild online stats:', error);
+        res.status(500).json({ error: 'Failed to fetch guild online stats' });
+    }
+});
+
+// Получить текущую статистику для всех серверов
+router.get('/all-guilds-online', async (req, res) => {
+    try {
+        // Получаем последнюю статистику для каждого сервера
+        const guilds = await req.prisma.guild.findMany();
+        
+        const guildsStats = await Promise.all(
+            guilds.map(async (guild) => {
+                const latestStats = await req.prisma.guildStats.findFirst({
+                    where: { guildId: guild.id },
+                    orderBy: { timestamp: 'desc' },
+                });
+
+                return {
+                    guildId: guild.id,
+                    guildName: guild.name,
+                    iconUrl: guild.iconUrl,
+                    stats: latestStats || {
+                        totalMembers: 0,
+                        onlineMembers: 0,
+                        offlineMembers: 0,
+                        idleMembers: 0,
+                        dndMembers: 0,
+                        timestamp: new Date(),
+                    },
+                };
+            })
+        );
+
+        res.json({ guilds: guildsStats });
+    } catch (error) {
+        console.error('Error fetching all guilds online stats:', error);
+        res.status(500).json({ error: 'Failed to fetch all guilds online stats' });
+    }
+});
+
 module.exports = router;

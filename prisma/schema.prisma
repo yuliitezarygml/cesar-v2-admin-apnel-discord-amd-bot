@@ -157,3 +157,18 @@ model DeletedMessage {
   @@index([authorId])
   @@index([deletedById])
 }
+
+// Статистика серверов (онлайн/офлайн пользователи)
+model GuildStats {
+  id              Int       @id @default(autoincrement())
+  guildId         String
+  totalMembers    Int       @default(0)
+  onlineMembers   Int       @default(0)
+  offlineMembers  Int       @default(0)
+  idleMembers     Int       @default(0)
+  dndMembers      Int       @default(0)
+  timestamp       DateTime  @default(now())
+
+  @@index([guildId])
+  @@index([timestamp])
+}
