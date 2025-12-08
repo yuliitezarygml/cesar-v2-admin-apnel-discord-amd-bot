@@ -324,4 +324,4 @@ MIT License
 
 ## 👨‍💻 Автор
 
-Создано с помощью Claude AI
+@yuliitezarygml
