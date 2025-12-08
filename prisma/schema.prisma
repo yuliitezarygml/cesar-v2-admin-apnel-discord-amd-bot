@@ -143,6 +143,11 @@ model DeletedMessage {
   authorId      String
   authorName    String
   content       String
+  hasAttachment Boolean   @default(false)
+  attachmentUrl String?
+  hasEmbed      Boolean   @default(false)
+  embedTitle    String?
+  isBot         Boolean   @default(false)
   deletedById   String
   deletedByName String
   createdAt     DateTime  @default(now())

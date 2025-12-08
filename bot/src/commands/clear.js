@@ -44,17 +44,54 @@ module.exports = {
                 });
             }
 
-            // Сохраняем сообщения перед удалением
-            const messagesToSave = deletable.map(msg => ({
-                guildId: interaction.guild.id,
-                channelId: interaction.channel.id,
-                channelName: interaction.channel.name,
-                authorId: msg.author.id,
-                authorName: msg.author.tag || msg.author.username,
-                content: msg.content || '[Медиа/Эмбед]',
-                deletedById: interaction.user.id,
-                deletedByName: interaction.user.tag || interaction.user.username,
-            }));
+            // Сохраняем сообщения с полной информацией
+            const messagesToSave = deletable.map(msg => {
+                // Определяем контент сообщения
+                let content = msg.content || '';
+
+                // Если есть вложения
+                const hasAttachment = msg.attachments.size > 0;
+                let attachmentUrl = null;
+                if (hasAttachment) {
+                    const attachment = msg.attachments.first();
+                    attachmentUrl = attachment.url;
+                    if (!content) {
+                        content = `📎 ${attachment.name || 'Вложение'}`;
+                    }
+                }
+
+                // Если есть эмбеды
+                const hasEmbed = msg.embeds.length > 0;
+                let embedTitle = null;
+                if (hasEmbed) {
+                    const embed = msg.embeds[0];
+                    embedTitle = embed.title || embed.description?.substring(0, 100) || 'Embed';
+                    if (!content && !hasAttachment) {
+                        content = `📋 ${embedTitle}`;
+                    }
+                }
+
+                // Если всё ещё пусто
+                if (!content) {
+                    content = '[Пустое сообщение]';
+                }
+
+                return {
+                    guildId: interaction.guild.id,
+                    channelId: interaction.channel.id,
+                    channelName: interaction.channel.name,
+                    authorId: msg.author.id,
+                    authorName: msg.author.tag || msg.author.username,
+                    content: content.substring(0, 2000),
+                    hasAttachment,
+                    attachmentUrl,
+                    hasEmbed,
+                    embedTitle,
+                    isBot: msg.author.bot,
+                    deletedById: interaction.user.id,
+                    deletedByName: interaction.user.tag || interaction.user.username,
+                };
+            });
 
             // Сохраняем в базу
             await prisma.deletedMessage.createMany({

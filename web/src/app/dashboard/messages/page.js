@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Trash2, Search, ChevronLeft, ChevronRight, RefreshCw, MessageSquare } from 'lucide-react';
+import { Trash2, Search, ChevronLeft, ChevronRight, RefreshCw, MessageSquare, Paperclip, Bot, FileImage, FileVideo, File } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -50,6 +50,18 @@ export default function MessagesPage() {
         }).format(date);
     }
 
+    function getAttachmentIcon(url) {
+        if (!url) return <Paperclip className="w-4 h-4" />;
+        const lower = url.toLowerCase();
+        if (lower.match(/\.(jpg|jpeg|png|gif|webp)$/)) {
+            return <FileImage className="w-4 h-4 text-blue-400" />;
+        }
+        if (lower.match(/\.(mp4|webm|mov|avi)$/)) {
+            return <FileVideo className="w-4 h-4 text-purple-400" />;
+        }
+        return <File className="w-4 h-4 text-gray-400" />;
+    }
+
     const filteredMessages = messages.filter(msg =>
         msg.content.toLowerCase().includes(search.toLowerCase()) ||
         msg.authorName.toLowerCase().includes(search.toLowerCase()) ||
@@ -96,22 +108,61 @@ export default function MessagesPage() {
                         {filteredMessages.map((msg) => (
                             <div key={msg.id} className="p-4 hover:bg-discord-lighter transition-colors">
                                 <div className="flex items-start gap-3">
-                                    <div className="w-10 h-10 bg-discord-blurple rounded-full flex items-center justify-center flex-shrink-0">
-                                        <MessageSquare className="w-5 h-5" />
+                                    {/* Avatar with bot indicator */}
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${msg.isBot ? 'bg-discord-blurple' : 'bg-discord-green'}`}>
+                                        {msg.isBot ? (
+                                            <Bot className="w-5 h-5" />
+                                        ) : (
+                                            <MessageSquare className="w-5 h-5" />
+                                        )}
                                     </div>
                                     <div className="flex-1 min-w-0">
+                                        {/* Header */}
                                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                                             <span className="font-medium text-white">{msg.authorName}</span>
+                                            {msg.isBot && (
+                                                <span className="px-1.5 py-0.5 bg-discord-blurple rounded text-xs font-medium">БОТ</span>
+                                            )}
                                             <span className="text-gray-500 text-sm">в</span>
                                             <span className="text-discord-blurple text-sm">#{msg.channelName}</span>
                                             <span className="text-gray-500 text-xs">•</span>
                                             <span className="text-gray-500 text-xs">{formatDate(msg.createdAt)}</span>
                                         </div>
+
+                                        {/* Content */}
                                         <p className="text-gray-300 break-words">{msg.content}</p>
-                                        <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-                                            <Trash2 className="w-3 h-3 text-discord-red" />
-                                            <span>Удалил: {msg.deletedByName}</span>
+
+                                        {/* Badges */}
+                                        <div className="flex items-center gap-3 mt-2 flex-wrap">
+                                            {msg.hasAttachment && (
+                                                <div className="flex items-center gap-1 text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded">
+                                                    {getAttachmentIcon(msg.attachmentUrl)}
+                                                    <span>Вложение</span>
+                                                </div>
+                                            )}
+                                            {msg.hasEmbed && (
+                                                <div className="flex items-center gap-1 text-xs bg-purple-500/20 text-purple-400 px-2 py-1 rounded">
+                                                    <MessageSquare className="w-3 h-3" />
+                                                    <span>Embed{msg.embedTitle ? `: ${msg.embedTitle.substring(0, 30)}` : ''}</span>
+                                                </div>
+                                            )}
+                                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                                                <Trash2 className="w-3 h-3 text-discord-red" />
+                                                <span>Удалил: {msg.deletedByName}</span>
+                                            </div>
                                         </div>
+
+                                        {/* Attachment preview */}
+                                        {msg.attachmentUrl && msg.attachmentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) && (
+                                            <div className="mt-2">
+                                                <img
+                                                    src={msg.attachmentUrl}
+                                                    alt="Вложение"
+                                                    className="max-w-xs max-h-32 rounded-lg border border-gray-700"
+                                                    onError={(e) => e.target.style.display = 'none'}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
