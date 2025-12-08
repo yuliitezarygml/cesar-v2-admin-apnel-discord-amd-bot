@@ -8,8 +8,10 @@ import {
     Shield,
     Trash2
 } from 'lucide-react';
+import packageJson from '../../../package.json';
 
 export default function DashboardLayout({ children }) {
+    const version = packageJson.version;
     return (
         <div className="flex min-h-screen bg-discord-darker">
             {/* Sidebar */}
@@ -54,7 +56,7 @@ export default function DashboardLayout({ children }) {
                 {/* Footer */}
                 <div className="p-4 border-t border-gray-800">
                     <p className="text-xs text-gray-500 text-center">
-                        Discord Mod Bot v1.0
+                        Discord Mod Bot v{version}
                     </p>
                 </div>
             </aside>

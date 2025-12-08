@@ -2,6 +2,9 @@ name: Prisma Schema Check
 
 on:
   push:
+    branches:
+      - main
+      - develop
     paths:
       - 'prisma/**'
   pull_request:
@@ -32,9 +35,13 @@ jobs:
 
     - name: Generate Prisma Client
       run: npx prisma generate
+      env:
+        DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
 
     - name: Check for migration issues
       run: |
         echo "Checking migrations..."
         npx prisma migrate status || echo "Migration check complete"
       continue-on-error: true
+      env:
+        DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"

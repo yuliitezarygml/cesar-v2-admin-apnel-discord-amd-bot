@@ -1,0 +1,49 @@
+name: Update Version
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  update-version:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: main
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Extract version from tag
+      id: version
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/v}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Updating to version: $VERSION"
+    
+    - name: Update package.json versions
+      run: |
+        VERSION="${{ steps.version.outputs.version }}"
+        
+        # Обновляем корневой package.json
+        sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" package.json
+        
+        # Обновляем web/package.json
+        sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" web/package.json
+        
+        # Обновляем bot/package.json
+        sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" bot/package.json
+        
+        # Обновляем api/package.json
+        sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" api/package.json
+        
+        echo "Updated all package.json files to version $VERSION"
+    
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add package.json web/package.json bot/package.json api/package.json
+        git diff --staged --quiet || git commit -m "chore: bump version to ${{ steps.version.outputs.version }}"
+        git push origin main
