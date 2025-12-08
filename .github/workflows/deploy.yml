@@ -1,0 +1,41 @@
+# Временно отключен - требует настройки сервера
+# Для включения раскомментируйте триггеры и добавьте секреты:
+# DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY
+name: Deploy to Production
+
+on:
+  # push:
+  #   tags:
+  #     - 'v*'
+  workflow_dispatch:  # Только ручной запуск
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Deploy to server via SSH
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.DEPLOY_HOST }}
+        username: ${{ secrets.DEPLOY_USER }}
+        key: ${{ secrets.DEPLOY_SSH_KEY }}
+        script: |
+          cd /path/to/discord-bot
+          git pull origin main
+          docker-compose pull
+          docker-compose up -d --build
+          docker-compose exec -T bot npx prisma migrate deploy
+
+    # Slack уведомления (опционально)
+    # - name: Notify deployment status
+    #   if: always()
+    #   uses: 8398a7/action-slack@v3
+    #   with:
+    #     status: ${{ job.status }}
+    #     text: 'Deployment to production ${{ job.status }}'
+    #     webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+    #   continue-on-error: true

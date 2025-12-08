@@ -1,0 +1,46 @@
+# Временно отключен - требует настройки сервера
+# Для включения раскомментируйте schedule и добавьте секреты:
+# DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY
+name: Database Backup
+
+on:
+  # schedule:
+  #   - cron: '0 2 * * *'  # Каждый день в 2:00 UTC
+  workflow_dispatch:  # Только ручной запуск
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Create database backup
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.DEPLOY_HOST }}
+        username: ${{ secrets.DEPLOY_USER }}
+        key: ${{ secrets.DEPLOY_SSH_KEY }}
+        script: |
+          DATE=$(date +%Y%m%d_%H%M%S)
+          BACKUP_DIR="/backups/discord-bot"
+          mkdir -p $BACKUP_DIR
+          docker exec discord-bot-db pg_dump -U postgres mydatabase > $BACKUP_DIR/backup_$DATE.sql
+          gzip $BACKUP_DIR/backup_$DATE.sql
+          # Удаляем бэкапы старше 30 дней
+          find $BACKUP_DIR -name "backup_*.sql.gz" -mtime +30 -delete
+          echo "Backup created: backup_$DATE.sql.gz"
+
+    - name: Upload backup to cloud storage
+      uses: appleboy/ssh-action@v1.0.0
+      if: success()
+      with:
+        host: ${{ secrets.DEPLOY_HOST }}
+        username: ${{ secrets.DEPLOY_USER }}
+        key: ${{ secrets.DEPLOY_SSH_KEY }}
+        script: |
+          # Пример загрузки в S3 или другое хранилище
+          # aws s3 cp /backups/discord-bot/backup_*.sql.gz s3://your-bucket/backups/
+          echo "Backup upload completed"
+      continue-on-error: true

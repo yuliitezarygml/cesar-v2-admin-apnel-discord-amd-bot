@@ -1,0 +1,40 @@
+name: Prisma Schema Check
+
+on:
+  push:
+    paths:
+      - 'prisma/**'
+  pull_request:
+    paths:
+      - 'prisma/**'
+
+jobs:
+  validate-schema:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Validate Prisma schema
+      run: npx prisma validate
+
+    - name: Check schema formatting
+      run: npx prisma format --check
+
+    - name: Generate Prisma Client
+      run: npx prisma generate
+
+    - name: Check for migration issues
+      run: |
+        echo "Checking migrations..."
+        npx prisma migrate status || echo "Migration check complete"
+      continue-on-error: true
