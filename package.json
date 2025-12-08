@@ -1,6 +1,6 @@
 {
     "name": "discord-moderation-bot",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Discord moderation bot with admin panel",
     "scripts": {
         "dev": "concurrently -n BOT,API,WEB -c blue,green,magenta \"npm run bot:dev\" \"npm run api:dev\" \"npm run web:dev\"",

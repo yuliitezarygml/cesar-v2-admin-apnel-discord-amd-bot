@@ -1,6 +1,6 @@
 {
     "name": "discord-bot-api",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "API server for Discord moderation bot admin panel",
     "main": "src/index.js",
     "scripts": {
