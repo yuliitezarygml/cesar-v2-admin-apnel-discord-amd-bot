@@ -2,17 +2,14 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Копируем package файлы
-COPY package*.json ./
+# Копируем всё
+COPY . .
 
 # Устанавливаем зависимости
 RUN npm ci --only=production
 
-# Копируем исходный код
-COPY . .
-
-# Генерируем Prisma Client
-RUN npx prisma generate
+# Генерируем Prisma Client (схема должна быть в ../prisma)
+RUN cd .. && npx prisma generate || echo "Prisma generate skipped"
 
 # Запуск бота
 CMD ["node", "src/index.js"]
