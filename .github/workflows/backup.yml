@@ -17,7 +17,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Create database backup
-      uses: appleboy/ssh-action@v1.0.0
+      uses: appleboy/ssh-action@v1.2.4
       with:
         host: ${{ secrets.DEPLOY_HOST }}
         username: ${{ secrets.DEPLOY_USER }}
@@ -33,7 +33,7 @@ jobs:
           echo "Backup created: backup_$DATE.sql.gz"
 
     - name: Upload backup to cloud storage
-      uses: appleboy/ssh-action@v1.0.0
+      uses: appleboy/ssh-action@v1.2.4
       if: success()
       with:
         host: ${{ secrets.DEPLOY_HOST }}
