@@ -16,10 +16,12 @@ ENV NODE_ENV production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Копируем public если существует
-COPY --from=builder /app/public ./public 2>/dev/null || true
+# Копируем только то что есть
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Копируем public если он был создан при сборке
+RUN mkdir -p ./public
+COPY --from=builder /app/public ./public || true
 
 USER nextjs
 
