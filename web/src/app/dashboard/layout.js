@@ -6,7 +6,11 @@ import {
     Settings,
     Server,
     Shield,
-    Trash2
+    Trash2,
+    Trophy,
+    ShieldAlert,
+    Ticket,
+    BarChart3
 } from 'lucide-react';
 import packageJson from '../../../package.json';
 
@@ -47,6 +51,27 @@ export default function DashboardLayout({ children }) {
                         <NavItem href="/dashboard/servers" icon={<Server />}>
                             Серверы
                         </NavItem>
+                        
+                        {/* Новые функции */}
+                        <li className="pt-4 pb-2">
+                            <span className="text-xs text-gray-500 uppercase px-3">Функции бота</span>
+                        </li>
+                        <NavItem href="/dashboard/levels" icon={<Trophy />}>
+                            Уровни
+                        </NavItem>
+                        <NavItem href="/dashboard/automod" icon={<ShieldAlert />}>
+                            Автомодерация
+                        </NavItem>
+                        <NavItem href="/dashboard/tickets" icon={<Ticket />}>
+                            Тикеты
+                        </NavItem>
+                        <NavItem href="/dashboard/polls" icon={<BarChart3 />}>
+                            Опросы
+                        </NavItem>
+                        
+                        <li className="pt-4 pb-2">
+                            <span className="text-xs text-gray-500 uppercase px-3">Система</span>
+                        </li>
                         <NavItem href="/dashboard/settings" icon={<Settings />}>
                             Настройки
                         </NavItem>

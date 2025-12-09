@@ -15,9 +15,15 @@ const client = new Client({
         GatewayIntentBits.GuildModeration,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
-        GatewayIntentBits.GuildPresences, // Добавляем для отслеживания статусов
+        GatewayIntentBits.GuildPresences,
+        GatewayIntentBits.GuildMessageReactions, // Для reaction roles
     ],
-    partials: [Partials.GuildMember, Partials.User],
+    partials: [
+        Partials.GuildMember,
+        Partials.User,
+        Partials.Message,
+        Partials.Reaction, // Для reaction roles на старых сообщениях
+    ],
 });
 
 // Коллекция команд

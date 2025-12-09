@@ -172,3 +172,222 @@ model GuildStats {
   @@index([guildId])
   @@index([timestamp])
 }
+
+// ==================== СИСТЕМА УРОВНЕЙ И ОПЫТА ====================
+
+// Уровни пользователей на сервере
+model UserLevel {
+  id          Int       @id @default(autoincrement())
+  guildId     String
+  userId      String
+  xp          Int       @default(0)
+  level       Int       @default(0)
+  totalXp     Int       @default(0)
+  messageCount Int      @default(0)
+  voiceMinutes Int      @default(0)
+  lastMessageAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([guildId, userId])
+  @@index([guildId])
+  @@index([level])
+  @@index([totalXp])
+}
+
+// Награды за уровни
+model LevelReward {
+  id          Int       @id @default(autoincrement())
+  guildId     String
+  level       Int
+  roleId      String    // ID роли которая выдается
+  createdAt   DateTime  @default(now())
+
+  @@unique([guildId, level])
+  @@index([guildId])
+}
+
+// Настройки системы уровней
+model LevelSettings {
+  id                  Int       @id @default(autoincrement())
+  guildId             String    @unique
+  enabled             Boolean   @default(true)
+  xpPerMessage        Int       @default(15)
+  xpPerVoiceMinute    Int       @default(5)
+  xpCooldown          Int       @default(60)  // секунды между получением XP
+  levelUpChannelId    String?   // канал для уведомлений о повышении уровня
+  levelUpMessage      String?   // кастомное сообщение
+  ignoredChannels     String[]  // каналы где не начисляется XP
+  ignoredRoles        String[]  // роли которые не получают XP
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+// ==================== АВТОМОДЕРАЦИЯ ====================
+
+// Настройки автомодерации
+model AutoModSettings {
+  id                  Int       @id @default(autoincrement())
+  guildId             String    @unique
+  
+  // Анти-спам
+  antiSpamEnabled     Boolean   @default(false)
+  antiSpamMaxMessages Int       @default(5)    // макс сообщений
+  antiSpamInterval    Int       @default(5)    // за сколько секунд
+  antiSpamAction      String    @default("warn") // warn, mute, kick, ban
+  antiSpamMuteDuration Int      @default(300)  // секунды
+  
+  // Фильтр слов
+  wordFilterEnabled   Boolean   @default(false)
+  bannedWords         String[]  // запрещенные слова
+  wordFilterAction    String    @default("delete") // delete, warn, mute
+  
+  // Анти-ссылки
+  antiLinksEnabled    Boolean   @default(false)
+  allowedDomains      String[]  // разрешенные домены
+  antiLinksAction     String    @default("delete")
+  
+  // Анти-капс
+  antiCapsEnabled     Boolean   @default(false)
+  antiCapsPercentage  Int       @default(70)   // % заглавных букв
+  antiCapsMinLength   Int       @default(10)   // мин длина сообщения
+  
+  // Анти-эмодзи спам
+  antiEmojiEnabled    Boolean   @default(false)
+  antiEmojiMax        Int       @default(10)   // макс эмодзи в сообщении
+  
+  // Игнорируемые роли и каналы
+  ignoredRoles        String[]
+  ignoredChannels     String[]
+  
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+// ==================== СИСТЕМА ТИКЕТОВ ====================
+
+// Настройки тикетов
+model TicketSettings {
+  id                  Int       @id @default(autoincrement())
+  guildId             String    @unique
+  enabled             Boolean   @default(true)
+  categoryId          String?   // категория для тикетов
+  supportRoleId       String?   // роль поддержки
+  logChannelId        String?   // канал для логов тикетов
+  welcomeMessage      String?   // сообщение при создании тикета
+  maxTicketsPerUser   Int       @default(1)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+// Тикеты
+model Ticket {
+  id            Int           @id @default(autoincrement())
+  guildId       String
+  channelId     String        @unique
+  userId        String        // создатель тикета
+  ticketNumber  Int           @default(0) // номер тикета на сервере
+  subject       String?
+  status        TicketStatus  @default(OPEN)
+  claimedBy     String?       // кто взял тикет
+  closedBy      String?       // кто закрыл
+  closedReason  String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  closedAt      DateTime?
+  
+  messages      TicketMessage[]
+
+  @@index([guildId])
+  @@index([ticketNumber])
+  @@index([userId])
+  @@index([status])
+}
+
+enum TicketStatus {
+  OPEN
+  CLAIMED
+  CLOSED
+}
+
+// Сообщения в тикетах
+model TicketMessage {
+  id          Int       @id @default(autoincrement())
+  ticketId    Int
+  ticket      Ticket    @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId      String
+  username    String
+  content     String
+  createdAt   DateTime  @default(now())
+
+  @@index([ticketId])
+}
+
+// ==================== ГОЛОСОВАНИЯ И ОПРОСЫ ====================
+
+// Опросы
+model Poll {
+  id          Int           @id @default(autoincrement())
+  guildId     String
+  channelId   String
+  messageId   String        @unique
+  creatorId   String
+  question    String
+  options     PollOption[]
+  multipleChoice Boolean    @default(false)
+  anonymous   Boolean       @default(false)
+  endsAt      DateTime?
+  status      PollStatus    @default(ACTIVE)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([guildId])
+  @@index([status])
+}
+
+enum PollStatus {
+  ACTIVE
+  ENDED
+  CANCELLED
+}
+
+// Варианты ответов в опросе
+model PollOption {
+  id          Int         @id @default(autoincrement())
+  pollId      Int
+  poll        Poll        @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  text        String
+  emoji       String?
+  votes       PollVote[]
+
+  @@index([pollId])
+}
+
+// Голоса в опросе
+model PollVote {
+  id          Int         @id @default(autoincrement())
+  optionId    Int
+  option      PollOption  @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  userId      String
+  createdAt   DateTime    @default(now())
+
+  @@unique([optionId, userId])
+  @@index([userId])
+}
+
+// ==================== РЕАКЦИИ ДЛЯ РОЛЕЙ ====================
+
+// Сообщения с реакциями для ролей
+model ReactionRole {
+  id          Int       @id @default(autoincrement())
+  guildId     String
+  channelId   String
+  messageId   String
+  emoji       String    // эмодзи (unicode или id кастомного)
+  roleId      String    // роль которая выдается
+  createdAt   DateTime  @default(now())
+
+  @@unique([messageId, emoji])
+  @@index([guildId])
+  @@index([messageId])
+}
