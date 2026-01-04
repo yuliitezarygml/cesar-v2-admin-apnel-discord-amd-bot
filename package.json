@@ -20,7 +20,7 @@
         "dotenv": "^16.3.1"
     },
     "devDependencies": {
-        "concurrently": "^8.2.2",
+        "concurrently": "^9.2.1",
         "prisma": "^5.7.0"
     }
 }
