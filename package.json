@@ -16,7 +16,7 @@
         "install:all": "npm install && cd bot && npm install && cd ../api && npm install && cd ../web && npm install"
     },
     "dependencies": {
-        "@prisma/client": "^5.7.0",
+        "@prisma/client": "^7.4.0",
         "dotenv": "^16.3.1"
     },
     "devDependencies": {
